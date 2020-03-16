@@ -37,7 +37,7 @@
 //! });
 //! ```
 
-use core::{ops::Deref, ptr};
+use core::ops::Deref;
 
 use nb;
 
@@ -345,9 +345,9 @@ where
         } else if sr.crcerr().bit_is_set() {
             nb::Error::Other(Error::Crc)
         } else if sr.rxne().bit_is_set() {
-            // NOTE(read_volatile) read only 1 byte (the svd2rust API only allows
+            // NOTE(VolatileCell8) read only 1 byte (the svd2rust API only allows
             // reading a half-word)
-            return Ok(unsafe { ptr::read_volatile(&self.spi.dr as *const _ as *const u8) });
+            return Ok(unsafe { (*(&self.spi.dr as *const _ as *const vcell::VolatileCell8)).get() });
         } else {
             nb::Error::WouldBlock
         })
@@ -363,8 +363,8 @@ where
         } else if sr.crcerr().bit_is_set() {
             nb::Error::Other(Error::Crc)
         } else if sr.txe().bit_is_set() {
-            // NOTE(write_volatile) see note above
-            unsafe { ptr::write_volatile(&self.spi.dr as *const _ as *mut u8, byte) }
+            // NOTE(VolatileCell8) see note above
+            unsafe { (*(&self.spi.dr as *const _ as *const vcell::VolatileCell8)).set(byte) }
             return Ok(());
         } else {
             nb::Error::WouldBlock
